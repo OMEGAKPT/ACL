@@ -63,6 +63,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scipts\CameraController.cs" />
+    <Compile Include="Assets\Scipts\MainInterfaceController.cs" />
+    <Compile Include="Assets\Scipts\PlayerInputs.cs" />
     <Compile Include="Assets\Scipts\PlayerMovement.cs" />
     <None Include="Assets\TextMesh Pro\Resources\Shaders\TMP_SDF-Surface-Mobile.shader" />
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Leading Characters.txt" />

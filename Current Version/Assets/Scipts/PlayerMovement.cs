@@ -4,43 +4,85 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour {
 
-    [SerializeField] float runSpeed = 6;
-    [SerializeField] float turnSmoothTime = 0.2f;
-    [SerializeField] float speedSmoothTime = 0.1f;
+    PlayerInputs pi;
+
+    public int RunSpeed { get; set; }
+    public int JumpSpeed { get; set; }
+
+    float turnSmoothTime;
+    float speedSmoothTime;
+   
 
     float turnSmoothVelocity;
     float speedSmoothVelocity;
     float currentSpeed;
 
-    bool walking;
-
-    Animator ani;
+    public Vector2 InputC { get; set; }
     Transform cameraT;
-    
+
     void Start()
     {
+        pi = GameObject.Find("Player").GetComponent<PlayerInputs>();
+        RunSpeed = (int)Speed.Walking;
+        JumpSpeed = (int)Jump.Running;
+
+        turnSmoothTime = 0.2f;
+        speedSmoothTime = 0.1f;
+        
+
         cameraT = Camera.main.transform;
-        ani = GetComponent<Animator>();
+        
+        InputC = new Vector2();
     }
 
     void Update()
     {
-        Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
-        input = input.normalized;
+        InputMove();
+        Movement();
+    }
 
-        if (input != Vector2.zero)
+    public void InputMove()
+    {
+        if (!pi.Jumping)
         {
-            walking = true;
-            float targetRotation = Mathf.Atan2(input.x, input.y) * Mathf.Rad2Deg + cameraT.eulerAngles.y;
+            InputC = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+        }
+        InputC = InputC.normalized;
+    }
+
+
+    public void Movement()
+    {
+        if (!pi.Jumping)
+        {
+            currentSpeed = Mathf.SmoothDamp(currentSpeed, RunSpeed * InputC.magnitude, ref speedSmoothVelocity, speedSmoothTime);
+            transform.Translate(transform.forward * currentSpeed * Time.deltaTime, Space.World);
+        }
+
+        if (InputC != Vector2.zero && !pi.Jumping)
+        {
+            RunSpeed = (int)Speed.Walking;
+            float targetRotation = Mathf.Atan2(InputC.x, InputC.y) * Mathf.Rad2Deg + cameraT.eulerAngles.y;
             transform.eulerAngles = Vector3.up * Mathf.SmoothDampAngle(transform.eulerAngles.y, targetRotation, ref turnSmoothVelocity, turnSmoothTime);
         }
         else
-            walking = false;
+        {
+            RunSpeed = (int)Speed.Idle;
+            JumpSpeed = (int)Jump.Idle;
+        }
+    }
 
-        ani.SetBool("Walking", walking);
+    public enum Speed
+    {
+        Idle = 0,
+        Praying = 2,
+        Walking = 4,
+        Running = 8
+    }
 
-        currentSpeed = Mathf.SmoothDamp(currentSpeed, runSpeed * input.magnitude, ref speedSmoothVelocity, speedSmoothTime);
-
-        transform.Translate(transform.forward * currentSpeed * Time.deltaTime, Space.World);
+    public enum Jump
+    {
+        Idle = 3,
+        Running = 6
     }
 }
