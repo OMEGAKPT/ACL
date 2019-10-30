@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class PlayerInputs : MonoBehaviour
 {
+    [SerializeField] GameObject fakeSword;
+    [SerializeField] GameObject sword;
+
     PlayerMovement pm;
     PlayerController pc;
     MainInterfaceController mic;
@@ -19,6 +22,7 @@ public class PlayerInputs : MonoBehaviour
 
     void Start()
     {
+        sword.SetActive(false);
         pc = GameObject.Find("Player").GetComponent<PlayerController>();
         pm = GameObject.Find("Player").GetComponent<PlayerMovement>();
         mic = GameObject.Find("Canvas").GetComponent<MainInterfaceController>();
@@ -82,8 +86,17 @@ public class PlayerInputs : MonoBehaviour
             {
                 Attacking = true;
                 ani.SetBool("Punching", Attacking);
-                StartCoroutine("StopAttacking");
             }
+            else if (mic.CurrentWeaponV == (byte)MainInterfaceController.AttackTypes.Sword)
+            {
+                Attacking = true;
+                ani.SetBool("AttackSword",Attacking);
+
+                fakeSword.SetActive(false);
+                sword.SetActive(true);
+            }
+
+            StartCoroutine("StopAttacking");
         }
     }
 
@@ -92,6 +105,7 @@ public class PlayerInputs : MonoBehaviour
         yield return new WaitForSeconds(1f);
         Attacking = false;
         ani.SetBool("Punching", Attacking);
+        ani.SetBool("AttackSword", Attacking);
     }
 
 
