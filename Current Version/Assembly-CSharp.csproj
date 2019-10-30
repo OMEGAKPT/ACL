@@ -63,9 +63,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scipts\CameraController.cs" />
+    <Compile Include="Assets\Scipts\EnemyController.cs" />
     <Compile Include="Assets\Scipts\MainInterfaceController.cs" />
+    <Compile Include="Assets\Scipts\PlayerController.cs" />
     <Compile Include="Assets\Scipts\PlayerInputs.cs" />
     <Compile Include="Assets\Scipts\PlayerMovement.cs" />
+    <Compile Include="Assets\Scipts\Punch.cs" />
     <None Include="Assets\TextMesh Pro\Resources\Shaders\TMP_SDF-Surface-Mobile.shader" />
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Leading Characters.txt" />
     <None Include="Assets\TextMesh Pro\Resources\Shaders\TMPro_Properties.cginc" />

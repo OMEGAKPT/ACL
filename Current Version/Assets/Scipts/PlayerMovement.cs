@@ -37,17 +37,21 @@ public class PlayerMovement : MonoBehaviour {
 
     void Update()
     {
+        if (pi.Attacking)
+        {
+            InputC = Vector2.zero;
+        }
         InputMove();
         Movement();
     }
 
     public void InputMove()
     {
-        if (!pi.Jumping)
+        if (!pi.Jumping && !pi.Attacking)
         {
             InputC = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+            InputC = InputC.normalized;
         }
-        InputC = InputC.normalized;
     }
 
 
@@ -59,7 +63,7 @@ public class PlayerMovement : MonoBehaviour {
             transform.Translate(transform.forward * currentSpeed * Time.deltaTime, Space.World);
         }
 
-        if (InputC != Vector2.zero && !pi.Jumping)
+        if (InputC != Vector2.zero && !pi.Jumping && !pi.Attacking)
         {
             RunSpeed = (int)Speed.Walking;
             float targetRotation = Mathf.Atan2(InputC.x, InputC.y) * Mathf.Rad2Deg + cameraT.eulerAngles.y;

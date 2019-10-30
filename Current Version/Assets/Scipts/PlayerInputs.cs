@@ -5,19 +5,23 @@ using UnityEngine;
 public class PlayerInputs : MonoBehaviour
 {
     PlayerMovement pm;
+    PlayerController pc;
+    MainInterfaceController mic;
     Animator ani;
 
     public bool Jumping { get; set; }
+    public bool Attacking { get; set; }
     public bool ChangedDirection { get; set; }
     float speedJumping;
     bool moving;
     bool praying;
     bool highProfile;
-    int searchStatus;
 
     void Start()
     {
+        pc = GameObject.Find("Player").GetComponent<PlayerController>();
         pm = GameObject.Find("Player").GetComponent<PlayerMovement>();
+        mic = GameObject.Find("Canvas").GetComponent<MainInterfaceController>();
         ani = GetComponent<Animator>();
 
         Jumping = false;
@@ -25,7 +29,8 @@ public class PlayerInputs : MonoBehaviour
         moving = false;
         praying = false;
         highProfile = false;
-        searchStatus = (int)Status.Good;
+        Attacking = false;
+        pc.SearchStatus = (int)Status.Good;
     }
 
 
@@ -39,7 +44,7 @@ public class PlayerInputs : MonoBehaviour
         InputProfile();
         InputRun();
         InputSpace();
-
+        InputAttack();
         SetVarAni();
     }
 
@@ -69,6 +74,27 @@ public class PlayerInputs : MonoBehaviour
         return true;
     }
 
+    public void InputAttack()
+    {
+        if (Input.GetButtonDown("Fire1"))
+        {
+            if (mic.CurrentWeaponV == (byte)MainInterfaceController.AttackTypes.Punch)
+            {
+                Attacking = true;
+                ani.SetBool("Punching", Attacking);
+                StartCoroutine("StopAttacking");
+            }
+        }
+    }
+
+    IEnumerator StopAttacking()
+    {
+        yield return new WaitForSeconds(1f);
+        Attacking = false;
+        ani.SetBool("Punching", Attacking);
+    }
+
+
     public void InputRun()
     {
         if (highProfile && Input.GetButton("Fire3") && pm.InputC != Vector2.zero)
@@ -95,7 +121,7 @@ public class PlayerInputs : MonoBehaviour
         if (Input.GetButton("Jump") && pm.RunSpeed <= (int)PlayerMovement.Speed.Walking && !highProfile)
         {
             praying = true;
-            searchStatus = (int)Status.Hide;
+            pc.SearchStatus = (int)Status.Hide;
 
             if (pm.RunSpeed == (int)PlayerMovement.Speed.Walking)
             {
@@ -109,7 +135,7 @@ public class PlayerInputs : MonoBehaviour
         }
         else
         {
-            searchStatus = (int)Status.Good;
+            pc.SearchStatus = (int)Status.Good;
             praying = false;
         }
 
