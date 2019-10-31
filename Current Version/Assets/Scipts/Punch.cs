@@ -1,32 +1,29 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class Punch : MonoBehaviour
 {
+    int damage;
     PlayerInputs pi;
-    // Start is called before the first frame update
+    MainInterfaceController mc;
+
     void Start()
     {
+        damage = 1;
         pi = GameObject.Find("Player").GetComponent<PlayerInputs>();
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        mc = GameObject.Find("Canvas").GetComponent<MainInterfaceController>();
     }
 
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Enemy"))
         {
-            if (pi.Attacking)
+            if (pi.Attacking && mc.CurrentWeaponV == (byte)MainInterfaceController.AttackTypes.Punch)
             {
-                if (other.GetComponent<EnemyController>().CanDamage)
+                if (other.gameObject.GetComponent<EnemyController>().CanDamage)
                 {
-                    other.GetComponent<EnemyController>().TakeDamage(1);
+                    other.gameObject.GetComponent<EnemyController>().TakeDamage(damage);
                     Debug.Log("Acertado");
+                    other.gameObject.GetComponent<EnemyController>().Ani.Play("Hit");
                 }
             }
         }

@@ -10,7 +10,7 @@ public class PlayerInputs : MonoBehaviour
     PlayerMovement pm;
     PlayerController pc;
     MainInterfaceController mic;
-    Animator ani;
+    public Animator Ani { get; set; }
 
     public bool Jumping { get; set; }
     public bool Attacking { get; set; }
@@ -23,10 +23,10 @@ public class PlayerInputs : MonoBehaviour
     void Start()
     {
         sword.SetActive(false);
-        pc = GameObject.Find("Player").GetComponent<PlayerController>();
-        pm = GameObject.Find("Player").GetComponent<PlayerMovement>();
+        pc = GetComponent<PlayerController>();
+        pm = GetComponent<PlayerMovement>();
         mic = GameObject.Find("Canvas").GetComponent<MainInterfaceController>();
-        ani = GetComponent<Animator>();
+        Ani = GetComponent<Animator>();
 
         Jumping = false;
         speedJumping = 4;
@@ -37,6 +37,10 @@ public class PlayerInputs : MonoBehaviour
         pc.SearchStatus = (int)Status.Good;
     }
 
+    public bool IsActiveSword()
+    {
+        return sword.activeSelf;
+    }
 
     void Update()
     {
@@ -80,17 +84,18 @@ public class PlayerInputs : MonoBehaviour
 
     public void InputAttack()
     {
-        if (Input.GetButtonDown("Fire1"))
+        if (Input.GetButtonDown("Fire1") && !Attacking)
         {
             if (mic.CurrentWeaponV == (byte)MainInterfaceController.AttackTypes.Punch)
             {
                 Attacking = true;
-                ani.SetBool("Punching", Attacking);
+                Ani.SetBool("Punching", Attacking);
+                DisableSword();
             }
             else if (mic.CurrentWeaponV == (byte)MainInterfaceController.AttackTypes.Sword)
             {
                 Attacking = true;
-                ani.SetBool("AttackSword",Attacking);
+                Ani.SetBool("AttackSword",Attacking);
 
                 fakeSword.SetActive(false);
                 sword.SetActive(true);
@@ -100,12 +105,18 @@ public class PlayerInputs : MonoBehaviour
         }
     }
 
+    public void DisableSword()
+    {
+        fakeSword.SetActive(true);
+        sword.SetActive(false);
+    }
+
     IEnumerator StopAttacking()
     {
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(0.6f);
         Attacking = false;
-        ani.SetBool("Punching", Attacking);
-        ani.SetBool("AttackSword", Attacking);
+        Ani.SetBool("Punching", Attacking);
+        Ani.SetBool("AttackSword", Attacking);
     }
 
 
@@ -166,9 +177,9 @@ public class PlayerInputs : MonoBehaviour
 
     public void SetVarAni()
     {
-        ani.SetInteger("Velocity", pm.RunSpeed);
-        ani.SetBool("Jumping", Jumping);
-        ani.SetBool("Praying", praying);
+        Ani.SetInteger("Velocity", pm.RunSpeed);
+        Ani.SetBool("Jumping", Jumping);
+        Ani.SetBool("Praying", praying);
     }
 
 

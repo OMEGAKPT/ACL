@@ -22,7 +22,7 @@ public class PlayerMovement : MonoBehaviour {
 
     void Start()
     {
-        pi = GameObject.Find("Player").GetComponent<PlayerInputs>();
+        pi = GetComponent<PlayerInputs>();
         RunSpeed = (int)Speed.Walking;
         JumpSpeed = (int)Jump.Running;
 
