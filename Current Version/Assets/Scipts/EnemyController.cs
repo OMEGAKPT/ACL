@@ -7,6 +7,8 @@ public class EnemyController : MonoBehaviour
 {
     [SerializeField] GameObject fakeSword;
     [SerializeField] GameObject sword;
+    [SerializeField] GameObject focus;
+
     public int Lifes { get; set; }
     public bool CanDamage { get; set; }
     public NavMeshAgent Agent { get; set; }
@@ -28,6 +30,7 @@ public class EnemyController : MonoBehaviour
 
     void Start()
     {
+        focus.SetActive(false);
         sword.SetActive(false);
         Agent = GetComponent<NavMeshAgent>();
         player = GameObject.FindGameObjectWithTag("Player");
@@ -174,7 +177,6 @@ public class EnemyController : MonoBehaviour
 
                     Debug.Log("YOU");
                 }
-
             }
         }
     }
@@ -195,6 +197,12 @@ public class EnemyController : MonoBehaviour
             StartCoroutine(WaitCanDamage());
         }
     }
+
+    public void ChaneFocus(bool v)
+    {
+        focus.SetActive(v);
+    }
+
     IEnumerator RemoveBody()
     {
         yield return new WaitForSeconds(10f);

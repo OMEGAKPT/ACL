@@ -6,6 +6,8 @@ public class PlayerInputs : MonoBehaviour
 {
     [SerializeField] GameObject fakeSword;
     [SerializeField] GameObject sword;
+    Camera camera;
+    GameObject focused;
 
     PlayerMovement pm;
     PlayerController pc;
@@ -22,12 +24,13 @@ public class PlayerInputs : MonoBehaviour
 
     void Start()
     {
+        focused = null;
         sword.SetActive(false);
         pc = GetComponent<PlayerController>();
         pm = GetComponent<PlayerMovement>();
         mic = GameObject.Find("Canvas").GetComponent<MainInterfaceController>();
         Ani = GetComponent<Animator>();
-
+        camera = Camera.main;
         Jumping = false;
         speedJumping = 4;
         moving = false;
@@ -53,6 +56,7 @@ public class PlayerInputs : MonoBehaviour
         InputRun();
         InputSpace();
         InputAttack();
+        InputFocusEnemy();
         SetVarAni();
     }
 
@@ -172,6 +176,44 @@ public class PlayerInputs : MonoBehaviour
         else
         {
             moving = false;
+        }
+    }
+
+    public void InputFocusEnemy()
+    {
+        
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            Debug.DrawRay(camera.transform.position, camera.transform.forward, Color.red);
+            RaycastHit hit;
+            
+            if (Physics.Raycast(camera.transform.position, camera.transform.forward, out hit, 100))
+            {
+                if (hit.collider.gameObject.CompareTag("Enemy"))
+                {
+                    if (focused == null)
+                    {
+                        focused = hit.collider.gameObject;
+                        focused.GetComponent<EnemyController>().ChaneFocus(true);
+                    }
+                    else if (focused != hit.collider.gameObject)
+                    {
+                        focused.GetComponent<EnemyController>().ChaneFocus(false);
+                        focused = hit.collider.gameObject;
+                        focused.GetComponent<EnemyController>().ChaneFocus(true);
+                    }
+                    else
+                    {
+                        focused.GetComponent<EnemyController>().ChaneFocus(false);
+                        focused = null;
+                    }
+                }
+                else
+                {
+                    focused.GetComponent<EnemyController>().ChaneFocus(false);
+                    focused = null;
+                }
+            }  
         }
     }
 
