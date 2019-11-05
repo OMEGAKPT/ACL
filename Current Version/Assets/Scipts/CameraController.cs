@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityStandardAssets.ImageEffects;
 
 public class CameraController : MonoBehaviour
 {
@@ -10,14 +11,20 @@ public class CameraController : MonoBehaviour
     [SerializeField] float distanceFromTarget = 2;
     [SerializeField] Vector2 pitchMinMax = new Vector2(-40,85);
     [SerializeField] float rotationSmoothTime = .1f;
-    
+    GameObject focused;
+
     Vector3 rotationSmoothVelocity;
     Vector3 currentRotation;
 
     float yaw, pitch;
-
+    public void SetFocus(GameObject f)
+    {
+        focused = f;
+    }
     private void Start()
     {
+        GetComponent<ColorCorrectionCurves>().enabled = false;
+        focused = null;
         if (lockCursor)
         {
             Cursor.lockState = CursorLockMode.Locked;
@@ -31,8 +38,15 @@ public class CameraController : MonoBehaviour
         pitch -= Input.GetAxis("Mouse Y") * mouseSensitivity;
         pitch = Mathf.Clamp(pitch, pitchMinMax.x,pitchMinMax.y);
 
-        currentRotation = Vector3.SmoothDamp(currentRotation, new Vector3(pitch,yaw), ref rotationSmoothVelocity, rotationSmoothTime);
+       
+
+        currentRotation = Vector3.SmoothDamp(currentRotation, new Vector3(pitch, yaw), ref rotationSmoothVelocity, rotationSmoothTime);
         transform.eulerAngles = currentRotation;
+
+        if (focused != null)
+        {
+            transform.LookAt(focused.transform);
+        }
 
         transform.position = target.position - transform.forward * distanceFromTarget;
     }

@@ -20,7 +20,7 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        
+        Debug.Log(SearchStatus);
     }
 
     public void TakeDamage(int i)

@@ -8,11 +8,12 @@ public class EnemyController : MonoBehaviour
     [SerializeField] GameObject fakeSword;
     [SerializeField] GameObject sword;
     [SerializeField] GameObject focus;
+    [SerializeField] Material highlight;
+    [SerializeField] Material baseMaterial;
 
     public int Lifes { get; set; }
     public bool CanDamage { get; set; }
     public NavMeshAgent Agent { get; set; }
-    GameObject player;
 
     public int StateEnemy { get; set; }
     public bool Attacking { get; set; }
@@ -26,6 +27,9 @@ public class EnemyController : MonoBehaviour
     float timeWaitAttack;
     PlayerInputs pi;
 
+    int minLife = 4;
+    int maxLife = 6;
+
     public Animator Ani { get; set; }
 
     void Start()
@@ -33,9 +37,8 @@ public class EnemyController : MonoBehaviour
         focus.SetActive(false);
         sword.SetActive(false);
         Agent = GetComponent<NavMeshAgent>();
-        player = GameObject.FindGameObjectWithTag("Player");
         Ani = GetComponent<Animator>();
-        Lifes = Random.Range(2,4);
+        Lifes = Random.Range(minLife,maxLife);
         CanDamage = true;
         Agent.speed = (int)Speed.Walking;
         Ani.SetInteger("Velocity", (int)Agent.speed);
@@ -72,6 +75,14 @@ public class EnemyController : MonoBehaviour
         }       
     }
 
+    public void ChangeHighlight(bool c)
+    {
+        if (c)
+            GetComponentInChildren<SkinnedMeshRenderer>().sharedMaterial = highlight;
+        else
+            GetComponentInChildren<SkinnedMeshRenderer>().sharedMaterial = baseMaterial;
+    }
+
     public void Die()
     {
         Ani.Play("Die");
@@ -98,7 +109,7 @@ public class EnemyController : MonoBehaviour
     {
         fakeSword.SetActive(false);
         sword.SetActive(true);
-
+       
         if (Vector3.Distance(transform.position, objetive.transform.position) >= 2f)
         {
             Agent.isStopped = false;
@@ -114,8 +125,9 @@ public class EnemyController : MonoBehaviour
             else
                 timer = 0;
 
-            if (timer >= timeWithoutSee)
+            if (timer >= timeWithoutSee || objetive.GetComponent<PlayerController>().SearchStatus == (int)PlayerInputs.Status.Hide)
             {
+                Debug.Log("coco");
                 fakeSword.SetActive(true);
                 sword.SetActive(false);
                 timer = 0;
@@ -168,8 +180,11 @@ public class EnemyController : MonoBehaviour
         {
             if (hit.collider.gameObject.CompareTag("Player"))
             {
-                if (pi.IsActiveSword() ||  pi.Attacking)
+                if (pi.IsActiveSword() ||
+                    hit.collider.gameObject.GetComponent<PlayerController>().SearchStatus == (int)PlayerInputs.Status.Alert ||
+                    hit.collider.gameObject.GetComponent<PlayerController>().SearchStatus == (int)PlayerInputs.Status.Wanted)
                 {
+                    hit.collider.gameObject.GetComponent<PlayerController>().SearchStatus = (int)PlayerInputs.Status.Wanted;
                     StateEnemy = (int)State.Attack;
                     objetive = hit.collider.gameObject;
                     Agent.speed = (int)Speed.Running;
@@ -183,6 +198,12 @@ public class EnemyController : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
+        if (objetive == null)
+        {
+            objetive = GameObject.FindGameObjectWithTag("Player");
+            StateEnemy = (int)State.Attack;
+        }
+
         if (CanDamage)
         {
             CanDamage = false;
@@ -198,7 +219,7 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    public void ChaneFocus(bool v)
+    public void ChangeFocus(bool v)
     {
         focus.SetActive(v);
     }

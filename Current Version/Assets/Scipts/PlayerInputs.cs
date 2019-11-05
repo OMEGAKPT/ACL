@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityStandardAssets.ImageEffects;
 
 public class PlayerInputs : MonoBehaviour
 {
@@ -21,6 +22,9 @@ public class PlayerInputs : MonoBehaviour
     bool moving;
     bool praying;
     bool highProfile;
+    bool visionActived;
+
+    int rangeVision;
 
     void Start()
     {
@@ -37,7 +41,9 @@ public class PlayerInputs : MonoBehaviour
         praying = false;
         highProfile = false;
         Attacking = false;
+        visionActived = false;
         pc.SearchStatus = (int)Status.Good;
+        rangeVision = 30;
     }
 
     public bool IsActiveSword()
@@ -57,6 +63,7 @@ public class PlayerInputs : MonoBehaviour
         InputSpace();
         InputAttack();
         InputFocusEnemy();
+        InputEagleVision();
         SetVarAni();
     }
 
@@ -90,6 +97,8 @@ public class PlayerInputs : MonoBehaviour
     {
         if (Input.GetButtonDown("Fire1") && !Attacking)
         {
+            pc.SearchStatus = (int)Status.Alert;
+            StartCoroutine("StopAlert");
             if (mic.CurrentWeaponV == (byte)MainInterfaceController.AttackTypes.Punch)
             {
                 Attacking = true;
@@ -106,6 +115,15 @@ public class PlayerInputs : MonoBehaviour
             }
 
             StartCoroutine("StopAttacking");
+        }
+    }
+
+    IEnumerator StopAlert()
+    {
+        yield return new WaitForSeconds(5);
+        if (pc.SearchStatus != (int)Status.Wanted)
+        {
+            pc.SearchStatus = (int)Status.Good;
         }
     }
 
@@ -164,7 +182,6 @@ public class PlayerInputs : MonoBehaviour
         }
         else
         {
-            pc.SearchStatus = (int)Status.Good;
             praying = false;
         }
 
@@ -194,26 +211,77 @@ public class PlayerInputs : MonoBehaviour
                     if (focused == null)
                     {
                         focused = hit.collider.gameObject;
-                        focused.GetComponent<EnemyController>().ChaneFocus(true);
+                        focused.GetComponent<EnemyController>().ChangeFocus(true);
+                        camera.GetComponent<CameraController>().SetFocus(focused);
                     }
                     else if (focused != hit.collider.gameObject)
                     {
-                        focused.GetComponent<EnemyController>().ChaneFocus(false);
+                        focused.GetComponent<EnemyController>().ChangeFocus(false);
                         focused = hit.collider.gameObject;
-                        focused.GetComponent<EnemyController>().ChaneFocus(true);
+                        focused.GetComponent<EnemyController>().ChangeFocus(true);
+                        camera.GetComponent<CameraController>().SetFocus(focused);
                     }
                     else
                     {
-                        focused.GetComponent<EnemyController>().ChaneFocus(false);
+                        focused.GetComponent<EnemyController>().ChangeFocus(false);
                         focused = null;
+                        camera.GetComponent<CameraController>().SetFocus(null);
                     }
                 }
                 else
                 {
-                    focused.GetComponent<EnemyController>().ChaneFocus(false);
-                    focused = null;
+                    if (focused != null)
+                    {
+                        focused.GetComponent<EnemyController>().ChangeFocus(false);
+                        focused = null;
+                        camera.GetComponent<CameraController>().SetFocus(null);
+                    }
                 }
             }  
+        }
+    }
+
+    public void InputEagleVision()
+    {
+        Collider[] colliders = Physics.OverlapSphere(transform.position, rangeVision);
+
+        if (!visionActived && Input.GetKeyDown(KeyCode.E) && (pm.InputC == Vector2.zero))
+        {
+            foreach(Collider c in colliders)
+            {
+                if (c.CompareTag("Enemy"))
+                {
+                    c.gameObject.GetComponent<EnemyController>().ChangeHighlight(true);
+                }
+                
+            }
+
+            camera.GetComponent<ColorCorrectionCurves>().enabled = true;
+            visionActived = true;
+        }
+
+        if (pm.InputC != Vector2.zero)
+        {
+            camera.GetComponent<ColorCorrectionCurves>().enabled = false;
+            StartCoroutine(DisableVisionEnemies(colliders));
+            visionActived = false;
+        }
+    }
+
+    IEnumerator DisableVisionEnemies(Collider[] colliders)
+    {
+        yield return new WaitForSeconds(6);
+
+        if (!visionActived)
+        {
+            foreach (Collider c in colliders)
+            {
+                if (c.CompareTag("Enemy"))
+                {
+                    c.gameObject.GetComponent<EnemyController>().ChangeHighlight(false);
+                }
+
+            }
         }
     }
 
