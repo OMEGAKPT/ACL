@@ -5,6 +5,8 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour {
 
     PlayerInputs pi;
+    PlayerController pc;
+    MainInterfaceController mic;
 
     public int RunSpeed { get; set; }
     public int JumpSpeed { get; set; }
@@ -23,6 +25,9 @@ public class PlayerMovement : MonoBehaviour {
     void Start()
     {
         pi = GetComponent<PlayerInputs>();
+        pc = GetComponent<PlayerController>();
+        mic = GetComponent<MainInterfaceController>();
+
         RunSpeed = (int)Speed.Walking;
         JumpSpeed = (int)Jump.Running;
 
@@ -37,12 +42,15 @@ public class PlayerMovement : MonoBehaviour {
 
     void Update()
     {
-        if (pi.Attacking)
+        if (!pc.IsDead)
         {
-            InputC = Vector2.zero;
+            if (pi.Attacking)
+            {
+                InputC = Vector2.zero;
+            }
+            InputMove();
+            Movement();
         }
-        InputMove();
-        Movement();
     }
 
     public void InputMove()
@@ -53,7 +61,6 @@ public class PlayerMovement : MonoBehaviour {
             InputC = InputC.normalized;
         }
     }
-
 
     public void Movement()
     {

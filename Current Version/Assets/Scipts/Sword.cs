@@ -27,7 +27,6 @@ public class Sword : MonoBehaviour
                 if (other.gameObject.GetComponent<EnemyController>().CanDamage)
                 {
                     other.gameObject.GetComponent<EnemyController>().TakeDamage(damage);
-                    Debug.Log("Acertado");
                     other.gameObject.GetComponent<EnemyController>().Ani.Play("Hit");
                 }
             }
@@ -38,6 +37,13 @@ public class Sword : MonoBehaviour
             {
                 pc.TakeDamage(damage);
                 pi.Ani.Play("Hit");
+            }
+        }
+        else if(other.gameObject.CompareTag("Chicken"))
+        {
+            if (pi.Attacking)
+            {
+                other.gameObject.GetComponent<ChickenController>().TakeDamage(damage);
             }
         }
     }

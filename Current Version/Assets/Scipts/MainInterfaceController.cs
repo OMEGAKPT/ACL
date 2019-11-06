@@ -9,6 +9,11 @@ public class MainInterfaceController : MonoBehaviour
     [SerializeField] Image bHand;
     [SerializeField] Image bCrossedHand;
     [SerializeField] Image bSteps;
+    [SerializeField] Image helpMenu;
+    [SerializeField] Image status;
+    [SerializeField] TMP_Text helpText;
+    [SerializeField] TMP_Text daggers;
+    [SerializeField] GameObject panel;
 
     [SerializeField] Image currentWeapon;
     [SerializeField] Image[] actions;
@@ -16,7 +21,7 @@ public class MainInterfaceController : MonoBehaviour
 
     [SerializeField] GameObject life;
     [SerializeField] GameObject lifeBar;
-
+    
     PlayerMovement pm;
     PlayerController pc;
 
@@ -28,7 +33,7 @@ public class MainInterfaceController : MonoBehaviour
     {
         pm = GameObject.Find("Player").GetComponent<PlayerMovement>();
         pc = GameObject.Find("Player").GetComponent<PlayerController>();
-
+        panel.SetActive(false);
         bHand.GetComponentInChildren<TMP_Text>().SetText("correr");
         CurrentWeaponV = (byte)AttackTypes.Punch;
         lastWeapon = (byte)AttackTypes.Punch;
@@ -41,48 +46,72 @@ public class MainInterfaceController : MonoBehaviour
         }
         currentWeapon.color = Color.black;
         PrintLifes();
+
+        daggers.text = "" + pc.Daggers;
+
+        StatusColor();
+    }
+
+    public bool GetPanel() { return panel.activeSelf; }
+
+    public void ChangePanel()
+    {
+        panel.active = !panel.active;
     }
     
     void Update()
     {
-        if (lastWeapon != 0)
+        if (!panel.activeSelf)
         {
-            bCrossedHand.enabled = true;
-            bCrossedHand.GetComponentInChildren<TMP_Text>().enabled = true;
-            bCrossedHand.GetComponentInChildren<TMP_Text>().SetText(actionsC[CurrentWeaponV]);
-        }
-        else
-        {
-            bCrossedHand.enabled = false;
-            bCrossedHand.GetComponentInChildren<TMP_Text>().enabled = false;
-        }
+            HelpMenu();
+            if (lastWeapon != 0)
+            {
+                bCrossedHand.enabled = true;
+                bCrossedHand.GetComponentInChildren<TMP_Text>().enabled = true;
+                bCrossedHand.GetComponentInChildren<TMP_Text>().SetText(actionsC[CurrentWeaponV]);
+            }
+            else
+            {
+                bCrossedHand.enabled = false;
+                bCrossedHand.GetComponentInChildren<TMP_Text>().enabled = false;
+            }
 
-        if (Input.GetButton("Fire2"))
-        {
-            bHand.enabled = true;
-            bHand.GetComponentInChildren<TMP_Text>().enabled = true;
-            bHand.GetComponentInChildren<TMP_Text>().SetText("correr");
-            bSteps.GetComponentInChildren<TMP_Text>().SetText("saltar");
+            if (Input.GetButton("Fire2"))
+            {
+                bHand.enabled = true;
+                bHand.GetComponentInChildren<TMP_Text>().enabled = true;
+                bHand.GetComponentInChildren<TMP_Text>().SetText("correr");
+                bSteps.GetComponentInChildren<TMP_Text>().SetText("saltar");
+            }
+            else
+            {
+                bSteps.GetComponentInChildren<TMP_Text>().SetText("mezclarse");
+                bHand.enabled = false;
+                bHand.GetComponentInChildren<TMP_Text>().enabled = false;
+            }
+
+            InputsColor();
+
+            CurrentWeaponV = (Input.GetKeyDown("1") ? (byte)AttackTypes.HiddenBlade :
+                    Input.GetKeyDown("2") ? (byte)AttackTypes.Sword :
+                    Input.GetKeyDown("3") ? (byte)AttackTypes.Punch :
+                    Input.GetKeyDown("4") ? (byte)AttackTypes.Dagger :
+                    lastWeapon);
+
+            if (CurrentWeaponV != lastWeapon)
+            {
+                lastWeapon = CurrentWeaponV;
+                StartCoroutine(ChangeWeapon());
+            }
         }
-        else
+    }
+
+    public void HelpMenu()
+    {
+        if (Input.GetKeyDown(KeyCode.H))
         {
-            bSteps.GetComponentInChildren<TMP_Text>().SetText("mezclarse");
-            bHand.enabled = false;
-            bHand.GetComponentInChildren<TMP_Text>().enabled = false;
-        }
-
-        InputsColor();
-
-        CurrentWeaponV = (byte)(Input.GetKeyDown("1")? (byte)AttackTypes.HiddenBlade : 
-                Input.GetKeyDown("2")? (byte)AttackTypes.Sword : 
-                Input.GetKeyDown("3")? (byte)AttackTypes.Punch : 
-                Input.GetKeyDown("4")? (byte)AttackTypes.Dagger : 
-                lastWeapon);
-
-        if (CurrentWeaponV != lastWeapon)
-        {
-            lastWeapon = CurrentWeaponV;
-            StartCoroutine(ChangeWeapon());
+            helpMenu.enabled = !helpMenu.enabled;
+            helpText.enabled = !helpText.enabled;
         }
     }
 
@@ -116,6 +145,26 @@ public class MainInterfaceController : MonoBehaviour
         }
     }
 
+    public void StatusColor()
+    {
+        if (pc.SearchStatus == (int)PlayerInputs.Status.Good)
+        {
+            status.color = Color.cyan;
+        }
+        else if (pc.SearchStatus == (int)PlayerInputs.Status.Alert)
+        {
+            status.color = Color.yellow;
+        }
+        else if (pc.SearchStatus == (int)PlayerInputs.Status.Wanted)
+        {
+            status.color = Color.red;
+        }
+        else if (pc.SearchStatus == (int)PlayerInputs.Status.Hide)
+        {
+            status.color = Color.white;
+        }
+    }
+
     public void PrintLifes()
     {
         Destroy(GameObject.Find("GroupLifes").gameObject);
@@ -144,6 +193,11 @@ public class MainInterfaceController : MonoBehaviour
                 actualX = x;
             }
         }
+    }
+
+    public void UpdateDaggers(int n)
+    {
+        daggers.text = "" + n;
     }
 
     IEnumerator SetBlackActions()

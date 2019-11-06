@@ -1,12 +1,15 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityStandardAssets.ImageEffects;
 
 public class PlayerInputs : MonoBehaviour
 {
     [SerializeField] GameObject fakeSword;
     [SerializeField] GameObject sword;
+    [SerializeField] GameObject dagger;
+    [SerializeField] GameObject pointDagger;
     Camera camera;
     GameObject focused;
 
@@ -23,8 +26,11 @@ public class PlayerInputs : MonoBehaviour
     bool praying;
     bool highProfile;
     bool visionActived;
+    bool canDagger;
 
     int rangeVision;
+    int distanceDager;
+    int damageHiddenBlade;
 
     void Start()
     {
@@ -42,8 +48,11 @@ public class PlayerInputs : MonoBehaviour
         highProfile = false;
         Attacking = false;
         visionActived = false;
+        canDagger = true;
         pc.SearchStatus = (int)Status.Good;
         rangeVision = 30;
+        distanceDager = 2000;
+        damageHiddenBlade = 10;
     }
 
     public bool IsActiveSword()
@@ -53,7 +62,10 @@ public class PlayerInputs : MonoBehaviour
 
     void Update()
     {
-        Inputs();
+        if (!pc.IsDead && !mic.GetPanel())
+        {
+            Inputs();
+        }
     }
 
     public void Inputs()
@@ -64,7 +76,19 @@ public class PlayerInputs : MonoBehaviour
         InputAttack();
         InputFocusEnemy();
         InputEagleVision();
+        CheckSword();
+        InputOptions();
         SetVarAni();
+    }
+
+    public void CheckSword()
+    {
+        if (mic.CurrentWeaponV != (byte)MainInterfaceController.AttackTypes.Sword)
+        {
+
+            sword.SetActive(false);
+            fakeSword.SetActive(true);
+        }
     }
 
     public void InputProfile()
@@ -93,12 +117,63 @@ public class PlayerInputs : MonoBehaviour
         return true;
     }
 
+    public void InputOptions()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Time.timeScale = 0;
+            Cursor.lockState = CursorLockMode.Confined;
+            Cursor.visible = true;
+            mic.ChangePanel();
+        }
+    }
+
     public void InputAttack()
     {
-        if (Input.GetButtonDown("Fire1") && !Attacking)
+        if (Input.GetButtonDown("Fire1") && mic.CurrentWeaponV == (byte)MainInterfaceController.AttackTypes.Dagger)
         {
-            pc.SearchStatus = (int)Status.Alert;
-            StartCoroutine("StopAlert");
+            if (canDagger && pc.Daggers > 0)
+            {
+                ChangeStatusAlert();
+                canDagger = false;
+                Vector3 q = new Vector3();
+
+                if (transform.rotation.eulerAngles.y >= 230 && transform.rotation.eulerAngles.y < 330)
+                {
+                    q = Vector3.forward;
+                }
+                else if (transform.rotation.eulerAngles.y >= 130 && transform.rotation.eulerAngles.y < 230)
+                {
+                    q = Vector3.left;
+                }
+                else if (transform.rotation.eulerAngles.y >= 40 && transform.rotation.eulerAngles.y < 130)
+                {
+                    q = Vector3.back;
+                }
+                else
+                {
+                    q = Vector3.right;
+                }
+
+                GameObject dag = Instantiate(dagger, pointDagger.transform.position, Quaternion.AngleAxis(90, q));
+                Rigidbody rg = dag.GetComponent<Rigidbody>();
+                rg.AddForce(transform.forward * distanceDager, ForceMode.Force);
+
+                Destroy(dag.gameObject, 5);
+                StartCoroutine(WaitNextDagger());
+                pc.UpdateDaggers(-1);
+            }
+        }
+        else if (Input.GetButtonDown("Fire1") && mic.CurrentWeaponV == (byte)MainInterfaceController.AttackTypes.HiddenBlade)
+        {
+            if (focused != null && Vector3.Distance(transform.position,focused.transform.position) < 2)
+            {
+                focused.GetComponent<EnemyController>().TakeDamage(damageHiddenBlade);
+            }
+        }
+        else if (Input.GetButtonDown("Fire1") && !Attacking)
+        {
+            ChangeStatusAlert();
             if (mic.CurrentWeaponV == (byte)MainInterfaceController.AttackTypes.Punch)
             {
                 Attacking = true;
@@ -107,8 +182,9 @@ public class PlayerInputs : MonoBehaviour
             }
             else if (mic.CurrentWeaponV == (byte)MainInterfaceController.AttackTypes.Sword)
             {
+                ChangeStatusAlert();
                 Attacking = true;
-                Ani.SetBool("AttackSword",Attacking);
+                Ani.SetBool("AttackSword", Attacking);
 
                 fakeSword.SetActive(false);
                 sword.SetActive(true);
@@ -118,12 +194,39 @@ public class PlayerInputs : MonoBehaviour
         }
     }
 
+    public void ChangeStatusAlert()
+    {
+        if (pc.SearchStatus != (int)Status.Wanted)
+        {
+            pc.SearchStatus = (int)Status.Alert;
+            StartCoroutine("StopAlert");
+            mic.StatusColor();
+        }
+    }
+
+    public void RemoveFocus()
+    {
+        if (focused != null)
+        {
+            focused.GetComponent<EnemyController>().ChangeFocus(false);
+            focused = null;
+            camera.GetComponent<CameraController>().SetFocus(null);
+        }
+    }
+
+    IEnumerator WaitNextDagger()
+    {
+        yield return new WaitForSeconds(1);
+        canDagger = true;
+    }
+
     IEnumerator StopAlert()
     {
         yield return new WaitForSeconds(5);
         if (pc.SearchStatus != (int)Status.Wanted)
         {
             pc.SearchStatus = (int)Status.Good;
+            mic.StatusColor();
         }
     }
 
@@ -169,6 +272,7 @@ public class PlayerInputs : MonoBehaviour
         {
             praying = true;
             pc.SearchStatus = (int)Status.Hide;
+            mic.StatusColor();
 
             if (pm.RunSpeed == (int)PlayerMovement.Speed.Walking)
             {
@@ -182,7 +286,12 @@ public class PlayerInputs : MonoBehaviour
         }
         else
         {
-            praying = false;
+            if (praying)
+            {
+                praying = false;
+                pc.SearchStatus = (int)Status.Good;
+                mic.StatusColor();
+            }
         }
 
         if (Jumping && (moving || pm.InputC != Vector2.zero))
@@ -223,18 +332,14 @@ public class PlayerInputs : MonoBehaviour
                     }
                     else
                     {
-                        focused.GetComponent<EnemyController>().ChangeFocus(false);
-                        focused = null;
-                        camera.GetComponent<CameraController>().SetFocus(null);
+                        RemoveFocus();
                     }
                 }
                 else
                 {
                     if (focused != null)
                     {
-                        focused.GetComponent<EnemyController>().ChangeFocus(false);
-                        focused = null;
-                        camera.GetComponent<CameraController>().SetFocus(null);
+                        RemoveFocus();
                     }
                 }
             }  
@@ -244,16 +349,21 @@ public class PlayerInputs : MonoBehaviour
     public void InputEagleVision()
     {
         Collider[] colliders = Physics.OverlapSphere(transform.position, rangeVision);
-
+        
         if (!visionActived && Input.GetKeyDown(KeyCode.E) && (pm.InputC == Vector2.zero))
         {
-            foreach(Collider c in colliders)
+            StopAllCoroutines();
+            foreach (Collider c in colliders)
             {
-                if (c.CompareTag("Enemy"))
+                if (c != null && c.CompareTag("Enemy"))
                 {
                     c.gameObject.GetComponent<EnemyController>().ChangeHighlight(true);
                 }
-                
+                else if (c != null && c.CompareTag("Chicken"))
+                {
+                    c.gameObject.GetComponent<ChickenController>().ChangeHighlight(true);
+                }
+
             }
 
             camera.GetComponent<ColorCorrectionCurves>().enabled = true;
@@ -263,24 +373,28 @@ public class PlayerInputs : MonoBehaviour
         if (pm.InputC != Vector2.zero)
         {
             camera.GetComponent<ColorCorrectionCurves>().enabled = false;
-            StartCoroutine(DisableVisionEnemies(colliders));
+            StartCoroutine(DisableVision());
             visionActived = false;
         }
     }
 
-    IEnumerator DisableVisionEnemies(Collider[] colliders)
+    IEnumerator DisableVision()
     {
+        Collider[] colliders = Physics.OverlapSphere(transform.position, rangeVision * 100);
         yield return new WaitForSeconds(6);
 
         if (!visionActived)
         {
             foreach (Collider c in colliders)
             {
-                if (c.CompareTag("Enemy"))
+                if (c != null && c.CompareTag("Enemy"))
                 {
                     c.gameObject.GetComponent<EnemyController>().ChangeHighlight(false);
                 }
-
+                else if (c != null && c.CompareTag("Chicken"))
+                {
+                    c.gameObject.GetComponent<ChickenController>().ChangeHighlight(false);
+                }
             }
         }
     }

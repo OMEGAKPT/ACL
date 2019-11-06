@@ -22,7 +22,6 @@ public class Punch : MonoBehaviour
                 if (other.gameObject.GetComponent<EnemyController>().CanDamage)
                 {
                     other.gameObject.GetComponent<EnemyController>().TakeDamage(damage);
-                    Debug.Log("Acertado");
                     other.gameObject.GetComponent<EnemyController>().Ani.Play("Hit");
                 }
             }
