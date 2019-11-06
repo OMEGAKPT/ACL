@@ -25,6 +25,8 @@ public class PlayerController : MonoBehaviour
         Daggers = 10;
         mic = GameObject.Find("Canvas").GetComponent<MainInterfaceController>();
         InvokeRepeating("RegenerateLife",1,3);
+        mic.PrintLifes();
+        mic.UpdateDaggers(Daggers);
     }
 
     public void TakeDamage(int i)
